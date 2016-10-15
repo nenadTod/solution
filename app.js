@@ -8,7 +8,7 @@ server.listen(process.env.port || process.env.PORT || 3978, function(){
 });
 
 
-server.use(restify.queryParser());
+//server.use(restify.queryParser());
 
 var connector = new builder.ChatConnector({
     appId : process.env.MICROSOFT_APP_ID,
@@ -16,15 +16,17 @@ var connector = new builder.ChatConnector({
 var bot = new builder.UniversalBot(connector);
 server.post('api/solution', connector.listen());
 
-server.get('api/solution', function (req, res, next) {
+/*server.get('api/solution', function (req, res, next) {
   console.log("ispis" + req.query['hub.verify_token']);
   //if (req.query['hub.verify_token'] == 'testbot_verify_token') {
     res.send(req.query['hub.challenge']);
   /*} else {
     res.send('Invalid verify token');
-  }*/
+  }
+});*/
+bot.on('api/solution', function (req, res){
+  console.log("usao");
 });
-
 
 /** Use CrunchBot LUIS model for the root dialog. */
 var model = 'https://api.projectoxford.ai/luis/v1/application?id=598f6090-ce4a-46f3-95d7-583b20de1881&subscription-key=464b86fd3c6b4123a93daf624e9b00ca&q=';
