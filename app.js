@@ -16,14 +16,23 @@ var connector = new builder.ChatConnector({
 var bot = new builder.UniversalBot(connector);
 server.post('api/solution', connector.listen());
 
-/*server.get('api/solution', function (req, res, next) {
+
+var app = express();
+
+app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.json());
+app.listen((process.env.PORT || 3000));
+
+server.get('api/solution', function (req, res, next) {
   console.log("ispis" + req.query['hub.verify_token']);
-  //if (req.query['hub.verify_token'] == 'testbot_verify_token') {
+  if (req.query['hub.verify_token'] == 'testbot_verify_token') {
     res.send(req.query['hub.challenge']);
-  /*} else {
+  } else {
     res.send('Invalid verify token');
   }
-});*/
+});
+
+
 
 
 /** Use CrunchBot LUIS model for the root dialog. */
@@ -32,9 +41,6 @@ var recognizer = new builder.LuisRecognizer(model);
 var intents = new builder.IntentDialog({ recognizers: [recognizer] });
 bot.dialog('/', intents);
 
-bot.on('api/solution', function (req, res){
-  console.log("usao");
-});
 
 /** Answer help related questions like "what can I say?" */
 intents.matches('bla', '/helpMessage');
