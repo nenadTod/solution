@@ -15,7 +15,7 @@ server.post('api/solution', connector.listen());
 var model = 'https://api.projectoxford.ai/luis/v1/application?id=598f6090-ce4a-46f3-95d7-583b20de1881&subscription-key=464b86fd3c6b4123a93daf624e9b00ca&q=';
 var recognizer = new builder.LuisRecognizer(model);
 var dialog = new builder.IntentDialog({ recognizers: [recognizer] });
-bot.dialog('/', dialog);
+bot.dialog('/api/solution', dialog);
 
 /** Answer help related questions like "what can I say?" */
 dialog.matches('Help', builder.DialogAction.send(prompts.helpMessage));
@@ -44,36 +44,40 @@ dialog.matches('website', [askCompany, answerQuestion('website', prompts.answerW
  * in the users question if specified and valid. Otherwise it will use the last company a user asked 
  * about. If it the company is missing it will prompt the user to pick one. 
  */
-function askCompany(session, args, next) {
-    // First check to see if we either got a company from LUIS or have a an existing company
-    // that we can multi-turn over.
-    var company;
-    var entity = builder.EntityRecognizer.findEntity(args.entities, 'CompanyName');
-    if (entity) {
-        // The user specified a company so lets look it up to make sure its valid.
-        // * This calls the underlying function Prompts.choice() uses to match a users response
-        //   to a list of choices. When you pass it an object it will use the field names as the
-        //   list of choices to match against. 
-        company = builder.EntityRecognizer.findBestMatch(data, entity.entity);
-    } else if (session.dialogData.company) {
-        // Just multi-turn over the existing company
-        company = session.dialogData.company;
-    }
-    
-    // Prompt the user to pick a ocmpany if they didn't specify a valid one.
-    if (!company) {
-        // Lets see if the user just asked for a company we don't know about.
-        var txt = entity ? session.gettext(prompts.companyUnknown, { company: entity.entity }) : prompts.companyMissing;
-        
-        // Prompt the user to pick a company from the list. They can also ask to cancel the operation.
-        builder.Prompts.choice(session, txt, data);
-    } else {
-        // Great! pass the company to the next step in the waterfall which will answer the question.
-        // * This will match the format of the response returned from Prompts.choice().
-        next({ response: company })
-    }
-}
-
+ function askCompany(session, args, next) {
+      // First check to see if we either got a company from LUIS or have a an existing company
+      // that we can multi-turn over.
+      var company;
+      var entity = builder.EntityRecognizer.findEntity(args.entities, 'CompanyName');
+      if (entity) {
+          // The user specified a company so lets look it up to make sure its valid.
+          // * This calls the underlying function Prompts.choice() uses to match a users response
+          //   to a list of choices. When you pass it an object it will use the field names as the
+          //   list of choices to match against. 
+          company = builder.EntityRecognizer.findBestMatch(data, entity.entity);
+      } else if (session.dialogData.company) {
+          // Just multi-turn over the existing company
+          company = session.dialogData.company;
+      }
+      
+      // Prompt the user to pick a ocmpany if they didn't specify a valid one.
+      if (!company) {
+          // Lets see if the user just asked for a company we don't know about.
+          var txt = entity ? session.gettext(prompts.companyUnknown, { company: entity.entity }) : prompts.companyMissing;
+          
+          // Prompt the user to pick a company from the list. They can also ask to cancel the operation.
+          builder.Prompts.choice(session, txt, data);
+      } else {
+          // Great! pass the company to the next step in the waterfall which will answer the question.
+          // * This will match the format of the response returned from Prompts.choice().
+          next({ response: company })
+      }
+  }
+/*
+app.get('/', function(req, res){
+  askCompany()
+});
+*/
 /**
  * This function generates a generic answer step for an intent handlers waterfall. The company to answer
  * a question about will be passed into the step and the specified field from the data will be returned to 
