@@ -16,125 +16,351 @@ server.post('api/solution', connector.listen());
 var model = 'https://api.projectoxford.ai/luis/v1/application?id=598f6090-ce4a-46f3-95d7-583b20de1881&subscription-key=464b86fd3c6b4123a93daf624e9b00ca&q=';
 var recognizer = new builder.LuisRecognizer(model);
 var intents = new builder.IntentDialog({ recognizers: [recognizer] });
-bot.dialog('/', intents);
 
-/** Answer help related questions like "what can I say?" */
-intents.matches('bla', '/bla');
-intents.matches('/help', builder.DialogAction.send(prompts.helpMessage));
-intents.onDefault(builder.DialogAction.send(prompts.helpMessage));
 
-/** Answer acquisition related questions like "how many companies has microsoft bought?" */
-intents.matches('Acquisitions', [askCompany, answerQuestion('acquisitions', prompts.answerAcquisitions)]);
+//=========================================================
+// Bots Middleware
+//=========================================================
 
-/** Answer IPO date related questions like "when did microsoft go public?" */
-intents.matches('IpoDate', [askCompany, answerQuestion('ipoDate', prompts.answerIpoDate)]);
+// Anytime the major version is incremented any existing conversations will be restarted.
+bot.use(builder.Middleware.dialogVersion({ version: 1.0, resetCommand: /^reset/i }));
 
-/** Answer headquarters related questions like "where is microsoft located?" */
-intents.matches('Headquarters', [askCompany, answerQuestion('headquarters', prompts.answerHeadquarters)]);
+//=========================================================
+// Bots Global Actions
+//=========================================================
 
-/** Answer description related questions like "tell me about microsoft" */
-intents.matches('Description', [askCompany, answerQuestion('description', prompts.answerDescription)]);
+bot.endConversationAction('goodbye', 'Goodbye :)', { matches: /^goodbye/i });
+bot.beginDialogAction('help', '/help', { matches: /^help/i });
 
-/** Answer founder related questions like "who started microsoft?" */
-intents.matches('Founders', [askCompany, answerQuestion('founders', prompts.answerFounders)]);
+//=========================================================
+// Bots Dialogs
+//=========================================================
 
-/** Answer website related questions like "how can I contact microsoft?" */
-intents.matches('website', [askCompany, answerQuestion('website', prompts.answerWebsite)]);
+bot.dialog('/', [
+    function (session) {
+        // Send a greeting and show help.
+        var card = new builder.HeroCard(session)
+            .title("Microsoft Bot Framework")
+            .text("Your bots - wherever your users are talking.")
+            .images([
+                 builder.CardImage.create(session, "http://docs.botframework.com/images/demo_bot_image.png")
+            ]);
+        var msg = new builder.Message(session).attachments([card]);
+        session.send(msg);
+        session.send("Hi... I'm the Microsoft Bot Framework demo bot for Facebook. I can show you everything you can use our Bot Builder SDK to do on Facebook.");
+        session.beginDialog('/help');
+    },
+    function (session, results) {
+        // Display menu
+        session.beginDialog('/menu');
+    },
+    function (session, results) {
+        // Always say goodbye
+        session.send("Ok... See you later!");
+    }
+]);
 
-/** 
- * This function the first step in the waterfall for intent handlers. It will use the company mentioned
- * in the users question if specified and valid. Otherwise it will use the last company a user asked 
- * about. If it the company is missing it will prompt the user to pick one. 
- */
- function askCompany(session, args, next) {
-      // First check to see if we either got a company from LUIS or have a an existing company
-      // that we can multi-turn over.
-      var company;
-      var entity = builder.EntityRecognizer.findEntity(args.entities, 'CompanyName');
-      if (entity) {
-          // The user specified a company so lets look it up to make sure its valid.
-          // * This calls the underlying function Prompts.choice() uses to match a users response
-          //   to a list of choices. When you pass it an object it will use the field names as the
-          //   list of choices to match against. 
-          company = builder.EntityRecognizer.findBestMatch(data, entity.entity);
-      } else if (session.dialogData.company) {
-          // Just multi-turn over the existing company
-          company = session.dialogData.company;
-      }
-      
-      // Prompt the user to pick a ocmpany if they didn't specify a valid one.
-      if (!company) {
-          // Lets see if the user just asked for a company we don't know about.
-          var txt = entity ? session.gettext(prompts.companyUnknown, { company: entity.entity }) : prompts.companyMissing;
-          
-          // Prompt the user to pick a company from the list. They can also ask to cancel the operation.
-          builder.Prompts.choice(session, txt, data);
-      } else {
-          // Great! pass the company to the next step in the waterfall which will answer the question.
-          // * This will match the format of the response returned from Prompts.choice().
-          next({ response: company })
-      }
-  }
-/*
-app.get('/', function(req, res){
-  askCompany()
-});
-*/
-/**
- * This function generates a generic answer step for an intent handlers waterfall. The company to answer
- * a question about will be passed into the step and the specified field from the data will be returned to 
- * the user using the specified answer template. 
- */
-function answerQuestion(field, answerTemplate) {
-    return function (session, results) {
-        // Check to see if we have a company. The user can cancel picking a company so IPromptResult.response
-        // can be null. 
-        if (results.response) {
-            // Save company for multi-turn case and compose answer            
-            var company = session.dialogData.company = results.response;
-            var answer = { company: company.entity, value: data[company.entity][field] };
-            session.send(answerTemplate, answer);
+bot.dialog('/menu', [
+    function (session) {
+        builder.Prompts.choice(session, "What demo would you like to run?", "prompts|picture|cards|list|carousel|receipt|actions|(quit)");
+    },
+    function (session, results) {
+        if (results.response && results.response.entity != '(quit)') {
+            // Launch demo dialog
+            session.beginDialog('/' + results.response.entity);
         } else {
-            session.send(prompts.cancel);
+            // Exit the menu
+            session.endDialog();
         }
-    };
-}
+    },
+    function (session, results) {
+        // The menu runs a loop until the user chooses to (quit).
+        session.replaceDialog('/menu');
+    }
+]).reloadAction('reloadMenu', null, { matches: /^menu|show menu/i });
 
+bot.dialog('/help', [
+    function (session) {
+        session.endDialog("Global commands that are available anytime:\n\n* menu - Exits a demo and returns to the menu.\n* goodbye - End this conversation.\n* help - Displays these commands.");
+    }
+]);
 
-/** 
- * Sample data sourced from http://crunchbase.com on 3/18/2016 
- */
-var data = {
-  'Microsoft': {
-      acquisitions: 170,
-      ipoDate: 'Mar 13, 1986',
-      headquarters: 'Redmond, WA',
-      description: 'Microsoft, a software corporation, develops licensed and support products and services ranging from personal use to enterprise application.',
-      founders: 'Bill Gates and Paul Allen',
-      website: 'http://www.microsoft.com'
-  },
-  'Apple': {
-      acquisitions: 72,
-      ipoDate: 'Dec 19, 1980',
-      headquarters: 'Cupertino, CA',
-      description: 'Apple is a multinational corporation that designs, manufactures, and markets consumer electronics, personal computers, and software.',
-      founders: 'Kevin Harvey, Steve Wozniak, Steve Jobs, and Ron Wayne',
-      website: 'http://www.apple.com'
-  },
-  'Google': {
-      acquisitions: 39,
-      ipoDate: 'Aug 19, 2004',
-      headquarters: 'Mountain View, CA',
-      description: 'Google is a multinational corporation that is specialized in internet-related services and products.',
-      founders: 'Baris Gultekin, Michoel Ogince, Sergey Brin, and Larry Page',
-      website: 'http://www.google.com'
-  },
-  'Amazon': {
-      acquisitions: 58,
-      ipoDate: 'May 15, 1997',
-      headquarters: 'Seattle, WA',
-      description: 'Amazon.com is an international e-commerce website for consumers, sellers, and content creators.',
-      founders: 'Sachin Agarwal and Jeff Bezos',
-      website: 'http://amazon.com'
-  }
-};
+bot.dialog('/prompts', [
+    function (session) {
+        session.send("Our Bot Builder SDK has a rich set of built-in prompts that simplify asking the user a series of questions. This demo will walk you through using each prompt. Just follow the prompts and you can quit at any time by saying 'cancel'.");
+        builder.Prompts.text(session, "Prompts.text()\n\nEnter some text and I'll say it back.");
+    },
+    function (session, results) {
+        session.send("You entered '%s'", results.response);
+        builder.Prompts.number(session, "Prompts.number()\n\nNow enter a number.");
+    },
+    function (session, results) {
+        session.send("You entered '%s'", results.response);
+        session.send("Bot Builder includes a rich choice() prompt that lets you offer a user a list choices to pick from. On Facebook these choices by default surface using Quick Replies if there are 10 or less choices. If there are more than 10 choices a numbered list will be used but you can specify the exact type of list to show using the ListStyle property.");
+        builder.Prompts.choice(session, "Prompts.choice()\n\nChoose a list style (the default is auto.)", "auto|inline|list|button|none");
+    },
+    function (session, results) {
+        var style = builder.ListStyle[results.response.entity];
+        builder.Prompts.choice(session, "Prompts.choice()\n\nNow pick an option.", "option A|option B|option C", { listStyle: style });
+    },
+    function (session, results) {
+        session.send("You chose '%s'", results.response.entity);
+        builder.Prompts.confirm(session, "Prompts.confirm()\n\nSimple yes/no questions are possible. Answer yes or no now.");
+    },
+    function (session, results) {
+        session.send("You chose '%s'", results.response ? 'yes' : 'no');
+        builder.Prompts.time(session, "Prompts.time()\n\nThe framework can recognize a range of times expressed as natural language. Enter a time like 'Monday at 7am' and I'll show you the JSON we return.");
+    },
+    function (session, results) {
+        session.send("Recognized Entity: %s", JSON.stringify(results.response));
+        builder.Prompts.attachment(session, "Prompts.attachment()\n\nYour bot can wait on the user to upload an image or video. Send me an image and I'll send it back to you.");
+    },
+    function (session, results) {
+        var msg = new builder.Message(session)
+            .ntext("I got %d attachment.", "I got %d attachments.", results.response.length);
+        results.response.forEach(function (attachment) {
+            msg.addAttachment(attachment);    
+        });
+        session.endDialog(msg);
+    }
+]);
+
+bot.dialog('/picture', [
+    function (session) {
+        session.send("You can easily send pictures to a user...");
+        var msg = new builder.Message(session)
+            .attachments([{
+                contentType: "image/jpeg",
+                contentUrl: "http://www.theoldrobots.com/images62/Bender-18.JPG"
+            }]);
+        session.endDialog(msg);
+    }
+]);
+
+bot.dialog('/cards', [
+    function (session) {
+        session.send("You can use either a Hero or a Thumbnail card to send the user visually rich information. On Facebook both will be rendered using the same Generic Template...");
+
+        var msg = new builder.Message(session)
+            .attachments([
+                new builder.HeroCard(session)
+                    .title("Hero Card")
+                    .subtitle("The Space Needle is an observation tower in Seattle, Washington, a landmark of the Pacific Northwest, and an icon of Seattle.")
+                    .images([
+                        builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Seattlenighttimequeenanne.jpg/320px-Seattlenighttimequeenanne.jpg")
+                    ])
+                    .tap(builder.CardAction.openUrl(session, "https://en.wikipedia.org/wiki/Space_Needle"))
+            ]);
+        session.send(msg);
+
+        msg = new builder.Message(session)
+            .attachments([
+                new builder.ThumbnailCard(session)
+                    .title("Thumbnail Card")
+                    .subtitle("Pike Place Market is a public market overlooking the Elliott Bay waterfront in Seattle, Washington, United States.")
+                    .images([
+                        builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/en/thumb/2/2a/PikePlaceMarket.jpg/320px-PikePlaceMarket.jpg")
+                    ])
+                    .tap(builder.CardAction.openUrl(session, "https://en.wikipedia.org/wiki/Pike_Place_Market"))
+            ]);
+        session.endDialog(msg);
+    }
+]);
+
+bot.dialog('/list', [
+    function (session) {
+        session.send("You can send the user a list of cards as multiple attachments in a single message...");
+
+        var msg = new builder.Message(session)
+            .attachments([
+                new builder.HeroCard(session)
+                    .title("Space Needle")
+                    .subtitle("The Space Needle is an observation tower in Seattle, Washington, a landmark of the Pacific Northwest, and an icon of Seattle.")
+                    .images([
+                        builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Seattlenighttimequeenanne.jpg/320px-Seattlenighttimequeenanne.jpg")
+                    ]),
+                new builder.HeroCard(session)
+                    .title("Pikes Place Market")
+                    .subtitle("Pike Place Market is a public market overlooking the Elliott Bay waterfront in Seattle, Washington, United States.")
+                    .images([
+                        builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/en/thumb/2/2a/PikePlaceMarket.jpg/320px-PikePlaceMarket.jpg")
+                    ])
+            ]);
+        session.endDialog(msg);
+    }
+]);
+
+bot.dialog('/carousel', [
+    function (session) {
+        session.send("You can pass a custom message to Prompts.choice() that will present the user with a carousel of cards to select from. Each card can even support multiple actions.");
+        
+        // Ask the user to select an item from a carousel.
+        var msg = new builder.Message(session)
+            .attachmentLayout(builder.AttachmentLayout.carousel)
+            .attachments([
+                new builder.HeroCard(session)
+                    .title("Space Needle")
+                    .subtitle("The Space Needle is an observation tower in Seattle, Washington, a landmark of the Pacific Northwest, and an icon of Seattle.")
+                    .images([
+                        builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Seattlenighttimequeenanne.jpg/320px-Seattlenighttimequeenanne.jpg")
+                            .tap(builder.CardAction.showImage(session, "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Seattlenighttimequeenanne.jpg/800px-Seattlenighttimequeenanne.jpg")),
+                    ])
+                    .buttons([
+                        builder.CardAction.openUrl(session, "https://en.wikipedia.org/wiki/Space_Needle", "Wikipedia"),
+                        builder.CardAction.imBack(session, "select:100", "Select")
+                    ]),
+                new builder.HeroCard(session)
+                    .title("Pikes Place Market")
+                    .subtitle("Pike Place Market is a public market overlooking the Elliott Bay waterfront in Seattle, Washington, United States.")
+                    .images([
+                        builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/en/thumb/2/2a/PikePlaceMarket.jpg/320px-PikePlaceMarket.jpg")
+                            .tap(builder.CardAction.showImage(session, "https://upload.wikimedia.org/wikipedia/en/thumb/2/2a/PikePlaceMarket.jpg/800px-PikePlaceMarket.jpg")),
+                    ])
+                    .buttons([
+                        builder.CardAction.openUrl(session, "https://en.wikipedia.org/wiki/Pike_Place_Market", "Wikipedia"),
+                        builder.CardAction.imBack(session, "select:101", "Select")
+                    ]),
+                new builder.HeroCard(session)
+                    .title("EMP Museum")
+                    .subtitle("EMP Musem is a leading-edge nonprofit museum, dedicated to the ideas and risk-taking that fuel contemporary popular culture.")
+                    .images([
+                        builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Night_Exterior_EMP.jpg/320px-Night_Exterior_EMP.jpg")
+                            .tap(builder.CardAction.showImage(session, "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Night_Exterior_EMP.jpg/800px-Night_Exterior_EMP.jpg"))
+                    ])
+                    .buttons([
+                        builder.CardAction.openUrl(session, "https://en.wikipedia.org/wiki/EMP_Museum", "Wikipedia"),
+                        builder.CardAction.imBack(session, "select:102", "Select")
+                    ])
+            ]);
+        builder.Prompts.choice(session, msg, "select:100|select:101|select:102");
+    },
+    function (session, results) {
+        var action, item;
+        var kvPair = results.response.entity.split(':');
+        switch (kvPair[0]) {
+            case 'select':
+                action = 'selected';
+                break;
+        }
+        switch (kvPair[1]) {
+            case '100':
+                item = "the Space Needle";
+                break;
+            case '101':
+                item = "Pikes Place Market";
+                break;
+            case '102':
+                item = "the EMP Museum";
+                break;
+        }
+        session.endDialog('You %s "%s"', action, item);
+    }    
+]);
+
+bot.dialog('/receipt', [
+    function (session) {
+        session.send("You can send a receipts for facebook using Bot Builders ReceiptCard...");
+        var msg = new builder.Message(session)
+            .attachments([
+                new builder.ReceiptCard(session)
+                    .title("Recipient's Name")
+                    .items([
+                        builder.ReceiptItem.create(session, "$22.00", "EMP Museum").image(builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/commons/a/a0/Night_Exterior_EMP.jpg")),
+                        builder.ReceiptItem.create(session, "$22.00", "Space Needle").image(builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/commons/7/7c/Seattlenighttimequeenanne.jpg"))
+                    ])
+                    .facts([
+                        builder.Fact.create(session, "1234567898", "Order Number"),
+                        builder.Fact.create(session, "VISA 4076", "Payment Method")
+                    ])
+                    .tax("$4.40")
+                    .total("$48.40")
+            ]);
+        session.send(msg);
+
+        session.send("Or using facebooks native attachment schema...");
+        msg = new builder.Message(session)
+            .sourceEvent({
+                facebook: {
+                    attachment: {
+                        type: "template",
+                        payload: {
+                            template_type: "receipt",
+                            recipient_name: "Stephane Crozatier",
+                            order_number: "12345678902",
+                            currency: "USD",
+                            payment_method: "Visa 2345",        
+                            order_url: "http://petersapparel.parseapp.com/order?order_id=123456",
+                            timestamp: "1428444852", 
+                            elements: [
+                                {
+                                    title: "Classic White T-Shirt",
+                                    subtitle: "100% Soft and Luxurious Cotton",
+                                    quantity: 2,
+                                    price: 50,
+                                    currency: "USD",
+                                    image_url: "http://petersapparel.parseapp.com/img/whiteshirt.png"
+                                },
+                                {
+                                    title: "Classic Gray T-Shirt",
+                                    subtitle: "100% Soft and Luxurious Cotton",
+                                    quantity: 1,
+                                    price: 25,
+                                    currency: "USD",
+                                    image_url: "http://petersapparel.parseapp.com/img/grayshirt.png"
+                                }
+                            ],
+                            address: {
+                                street_1: "1 Hacker Way",
+                                street_2: "",
+                                city: "Menlo Park",
+                                postal_code: "94025",
+                                state: "CA",
+                                country: "US"
+                            },
+                            summary: {
+                                subtotal: 75.00,
+                                shipping_cost: 4.95,
+                                total_tax: 6.19,
+                                total_cost: 56.14
+                            },
+                            adjustments: [
+                                { name: "New Customer Discount", amount: 20 },
+                                { name: "$10 Off Coupon", amount: 10 }
+                            ]
+                        }
+                    }
+                }
+            });
+        session.endDialog(msg);
+    }
+]);
+
+bot.dialog('/actions', [
+    function (session) { 
+        session.send("Bots can register global actions, like the 'help' & 'goodbye' actions, that can respond to user input at any time. You can even bind actions to buttons on a card.");
+
+        var msg = new builder.Message(session)
+            .attachments([
+                new builder.HeroCard(session)
+                    .title("Space Needle")
+                    .subtitle("The Space Needle is an observation tower in Seattle, Washington, a landmark of the Pacific Northwest, and an icon of Seattle.")
+                    .images([
+                        builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Seattlenighttimequeenanne.jpg/320px-Seattlenighttimequeenanne.jpg")
+                    ])
+                    .buttons([
+                        builder.CardAction.dialogAction(session, "weather", "Seattle, WA", "Current Weather")
+                    ])
+            ]);
+        session.send(msg);
+
+        session.endDialog("The 'Current Weather' button on the card above can be pressed at any time regardless of where the user is in the conversation with the bot. The bot can even show the weather after the conversation has ended.");
+    }
+]);
+
+// Create a dialog and bind it to a global action
+bot.dialog('/weather', [
+    function (session, args) {
+        session.endDialog("The weather in %s is 71 degrees and raining.", args.data);
+    }
+]);
+bot.beginDialogAction('weather', '/weather');   // <-- no 'matches' option means this can only be triggered by a button.
