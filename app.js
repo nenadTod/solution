@@ -1,10 +1,11 @@
 var builder = require('botbuilder');
 var restify = require('restify');
 var prompts = require('./prompts');
-//proba
 
 var server = restify.createServer();
-server.listen(process.env.port || process.env.PORT || 80, function(){console.log('im listening on port ' + process.env.PORT + " bla: " + server.name + " ijf " + server.url);});
+server.listen(process.env.port || process.env.PORT || 3978, function(){
+  console.log('im listening on port ' + process.env.PORT + " bla: " + server.name + " ijf " + server.url);
+});
 
 var connector = new builder.ChatConnector({
     appId : process.env.MICROSOFT_APP_ID,
