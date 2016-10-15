@@ -14,7 +14,6 @@ var bot = new builder.UniversalBot(connector);
 server.post('api/solution', connector.listen());
 server.get('/api/solution', function (req, res, next) {
   res.send(req.params);
-  return next();
 });
 
 
