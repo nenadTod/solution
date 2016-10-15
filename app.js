@@ -1,7 +1,7 @@
 var builder = require('botbuilder');
 var restify = require('restify');
 var prompts = require('./prompts');
-var bodyParser = require('bodyParser');
+var bodyParser = require('body-parser');
 
 var server = restify.createServer();
 server.listen(process.env.port || process.env.PORT || 3978, function(){
