@@ -15,12 +15,11 @@ var bot = new builder.UniversalBot(connector);
 server.post('api/solution', connector.listen());
 
 server.get('api/solution', function (req, res, next) {
+  var preChallenge = req.url.split('challenge=');
+  var challenge = preChallenge.substring(0,8);
   console.log("ispis " + req.url);
-  if (req.query['hub.verify_token'] == 'testbot_verify_token') {
-    res.send(req.query['hub.challenge']);
-  } else {
-    res.send('Invalid verify token');
-  }
+  res.send(challenge);
+  
 });
 
 
