@@ -1,7 +1,5 @@
 var builder = require('botbuilder');
 var restify = require('restify');
-var express = require('express');
-var bodyParser = require('body-parser');
 var prompts = require('./prompts');
 
 var server = restify.createServer();
@@ -10,23 +8,14 @@ server.listen(process.env.port || process.env.PORT || 3978, function(){
 });
 
 
-//server.use(restify.queryParser());
-
 var connector = new builder.ChatConnector({
-    appId : "d7a9dcb4-ef81-496d-8e5d-5d9fe5a0c53c",
-    appPassword : "dowRRFc1OcPpxZ5QRFmFTKj"});
+    appId : process.env.MICROSOFT_APP_ID,
+    appPassword : process.env.MICROSOFT_APP_PASSWORD});
 var bot = new builder.UniversalBot(connector);
 server.post('api/solution', connector.listen());
 
-
-var app = express();
-
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(bodyParser.json());
-app.listen((process.env.PORT || 3000));
-
 server.get('api/solution', function (req, res, next) {
-  console.log("ispis" + req.query['hub.verify_token']);
+  console.log("ispis " + req);
   if (req.query['hub.verify_token'] == 'testbot_verify_token') {
     res.send(req.query['hub.challenge']);
   } else {
