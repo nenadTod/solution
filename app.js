@@ -16,10 +16,10 @@ server.post('api/solution', connector.listen());
 var model = 'https://api.projectoxford.ai/luis/v1/application?id=598f6090-ce4a-46f3-95d7-583b20de1881&subscription-key=464b86fd3c6b4123a93daf624e9b00ca&q=';
 var recognizer = new builder.LuisRecognizer(model);
 var intents = new builder.IntentDialog({ recognizers: [recognizer] });
-bot.dialog('', intents);
+bot.dialog('/', intents);
 
 /** Answer help related questions like "what can I say?" */
-intents.matches('bla', '/help');
+intents.matches('bla', '/bla');
 intents.matches('Help', builder.DialogAction.send(prompts.helpMessage));
 intents.onDefault(builder.DialogAction.send(prompts.helpMessage));
 
