@@ -15,10 +15,7 @@ var bot = new builder.UniversalBot(connector);
 server.post('api/solution', connector.listen());
 
 server.get('api/solution', function (req, res, next) {
-  var preChallenge = req.url.split('challenge=');
-  var challenge = preChallenge.substring(0,8);
-  console.log("ispis " + req.url);
-  res.send(challenge);
+  
   
 });
 
