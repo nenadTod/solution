@@ -10,6 +10,7 @@
   "author": "VeDiCi",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.15.2",
     "botbuilder": "^3.3.0",
     "express": "^4.14.0",
     "restify": "^4.1.1"
