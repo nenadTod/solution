@@ -13,8 +13,8 @@ server.listen(process.env.port || process.env.PORT || 3978, function(){
 //server.use(restify.queryParser());
 
 var connector = new builder.ChatConnector({
-    appId : process.env.MICROSOFT_APP_ID,
-    appPassword : process.env.MICROSOFT_APP_PASSWORD});
+    appId : "d7a9dcb4-ef81-496d-8e5d-5d9fe5a0c53c",
+    appPassword : "dowRRFc1OcPpxZ5QRFmFTKj"});
 var bot = new builder.UniversalBot(connector);
 server.post('api/solution', connector.listen());
 
