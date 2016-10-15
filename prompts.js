@@ -15,5 +15,12 @@ module.exports = {
     answerHeadquarters: "The headquarters for %(company)s is located in %(value)s.",
     answerDescription: "%(value)s",
     answerFounders: "%(company)s was founded by %(value)s.",
-    answerWebsite: "The webiste for %(company)s is %(value)s."
+    answerWebsite: "The webiste for %(company)s is %(value)s.",
+    /*-------------*/
+    welcomeMessage: "Hello, how can I help you?",
+    chooseProduct: "Chose product from the list:",
+    quantityMessage: "Enter a quantity",
+    sthElse: "Would you like something else?",
+    buyMessage: "Ok, here is the bill %(bill). Would you like to proceed?",
+    thanks: "Thank you for shopping, enjoy your day!"
 };
