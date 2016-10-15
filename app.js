@@ -13,7 +13,7 @@ var connector = new builder.ChatConnector({
 var bot = new builder.UniversalBot(connector);
 server.post('api/solution', connector.listen());
 server.get('/api/solution', function (req, res, next) {
-  if (req.query['hub.verify_token'] === 'testbot_verify_token') {
+  if (req.query['hub.verify_token'] == 'testbot_verify_token') {
         res.send(req.query['hub.challenge']);
     } else {
         res.send('Invalid verify token');
