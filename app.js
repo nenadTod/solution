@@ -12,12 +12,14 @@ var connector = new builder.ChatConnector({
     appPassword : process.env.MICROSOFT_APP_PASSWORD});
 var bot = new builder.UniversalBot(connector);
 server.post('api/solution', connector.listen());
+
 server.get('/api/solution', function (req, res, next) {
+  console.log(req.query['hub.verify_token']);
   if (req.query['hub.verify_token'] == 'testbot_verify_token') {
-        res.send(req.query['hub.challenge']);
-    } else {
-        res.send('Invalid verify token');
-    }
+    res.send(req.query['hub.challenge']);
+  } else {
+    res.send('Invalid verify token');
+  }
 });
 
 
