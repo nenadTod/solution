@@ -20,7 +20,7 @@ bot.dialog('/', intents);
 
 /** Answer help related questions like "what can I say?" */
 intents.matches('bla', '/bla');
-intents.matches('Help', builder.DialogAction.send(prompts.helpMessage));
+intents.matches('/help', builder.DialogAction.send(prompts.helpMessage));
 intents.onDefault(builder.DialogAction.send(prompts.helpMessage));
 
 /** Answer acquisition related questions like "how many companies has microsoft bought?" */
