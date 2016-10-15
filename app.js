@@ -19,7 +19,7 @@ server.get('api/solution', function (req, res, next) {
   var prechallenge = prepreChallenge[1].split('&');
   var challenge = prechallenge[0];
   var thenum = challenge.replace( /^\D+/g, '');
-  console.log("ispis " + parseInt(thenum));
+  console.log("ispis " + thenum);
   res.send(thenum);
 });
 
