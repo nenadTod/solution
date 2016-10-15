@@ -19,11 +19,7 @@ server.get('api/solution', function (req, res, next) {
   var prechallenge = prepreChallenge[1].split('&');
   var challenge = prechallenge[0];
   console.log("ispis " + challenge);
-  if (req.query['hub.verify_token'] == 'testbot_verify_token') {
-    res.send(req.query['hub.challenge']);
-  } else {
-    res.send('Invalid verify token');
-  }
+  res.send(challenge);
   
 });
 
