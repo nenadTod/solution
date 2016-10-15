@@ -12,6 +12,11 @@ var connector = new builder.ChatConnector({
     appPassword : process.env.MICROSOFT_APP_PASSWORD});
 var bot = new builder.UniversalBot(connector);
 server.post('api/solution', connector.listen());
+server.get('/api/solution', function (req, res, next) {
+  res.send(req.params);
+  return next();
+});
+
 
 /** Use CrunchBot LUIS model for the root dialog. */
 var model = 'https://api.projectoxford.ai/luis/v1/application?id=598f6090-ce4a-46f3-95d7-583b20de1881&subscription-key=464b86fd3c6b4123a93daf624e9b00ca&q=';
