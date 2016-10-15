@@ -4,7 +4,7 @@ var prompts = require('./prompts');
 //proba
 
 var server = restify.createServer();
-server.listen(process.env.port || process.env.PORT || 13147, function(){console.log('im listening on port ' + process.env.PORT);});
+server.listen(process.env.port || process.env.PORT || 80, function(){console.log('im listening on port ' + process.env.PORT);});
 
 var connector = new builder.ChatConnector({
     appId : process.env.MICROSOFT_APP_ID,
