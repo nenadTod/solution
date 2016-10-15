@@ -10,35 +10,34 @@ var connector = new builder.ChatConnector({
     appPassword : process.env.MICROSOFT_APP_PASSWORD});
 var bot = new builder.UniversalBot(connector);
 server.post('api/solution', connector.listen());
-server.get('/chat', askCompany);
 
 /** Use CrunchBot LUIS model for the root dialog. */
 var model = 'https://api.projectoxford.ai/luis/v1/application?id=598f6090-ce4a-46f3-95d7-583b20de1881&subscription-key=464b86fd3c6b4123a93daf624e9b00ca&q=';
 var recognizer = new builder.LuisRecognizer(model);
-var dialog = new builder.IntentDialog({ recognizers: [recognizer] });
-bot.dialog('/', dialog);
+var intents = new builder.IntentDialog({ recognizers: [recognizer] });
+bot.dialog('/', intents);
 
 /** Answer help related questions like "what can I say?" */
-dialog.matches('Help', builder.DialogAction.send(prompts.helpMessage));
-dialog.onDefault(builder.DialogAction.send(prompts.helpMessage));
+intents.matches('Help', builder.DialogAction.send(prompts.helpMessage));
+intents.onDefault(builder.DialogAction.send(prompts.helpMessage));
 
 /** Answer acquisition related questions like "how many companies has microsoft bought?" */
-dialog.matches('Acquisitions', [askCompany, answerQuestion('acquisitions', prompts.answerAcquisitions)]);
+intents.matches('Acquisitions', [askCompany, answerQuestion('acquisitions', prompts.answerAcquisitions)]);
 
 /** Answer IPO date related questions like "when did microsoft go public?" */
-dialog.matches('IpoDate', [askCompany, answerQuestion('ipoDate', prompts.answerIpoDate)]);
+intents.matches('IpoDate', [askCompany, answerQuestion('ipoDate', prompts.answerIpoDate)]);
 
 /** Answer headquarters related questions like "where is microsoft located?" */
-dialog.matches('Headquarters', [askCompany, answerQuestion('headquarters', prompts.answerHeadquarters)]);
+intents.matches('Headquarters', [askCompany, answerQuestion('headquarters', prompts.answerHeadquarters)]);
 
 /** Answer description related questions like "tell me about microsoft" */
-dialog.matches('Description', [askCompany, answerQuestion('description', prompts.answerDescription)]);
+intents.matches('Description', [askCompany, answerQuestion('description', prompts.answerDescription)]);
 
 /** Answer founder related questions like "who started microsoft?" */
-dialog.matches('Founders', [askCompany, answerQuestion('founders', prompts.answerFounders)]);
+intents.matches('Founders', [askCompany, answerQuestion('founders', prompts.answerFounders)]);
 
 /** Answer website related questions like "how can I contact microsoft?" */
-dialog.matches('website', [askCompany, answerQuestion('website', prompts.answerWebsite)]);
+intents.matches('website', [askCompany, answerQuestion('website', prompts.answerWebsite)]);
 
 /** 
  * This function the first step in the waterfall for intent handlers. It will use the company mentioned
