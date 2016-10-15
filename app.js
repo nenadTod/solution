@@ -1,12 +1,15 @@
 var builder = require('botbuilder');
 var restify = require('restify');
 var prompts = require('./prompts');
+var bodyParser = require('bodyParser');
 
 var server = restify.createServer();
 server.listen(process.env.port || process.env.PORT || 3978, function(){
   console.log('im listening on port ' + process.env.PORT + " bla: " + server.name + " ijf " + server.url);
 });
 
+server.use(bodyParser.urlencoded({extended: false}));
+server.use(bodyParser.json());
 
 var connector = new builder.ChatConnector({
     appId : process.env.MICROSOFT_APP_ID,
@@ -21,6 +24,7 @@ server.get('api/solution', function (req, res, next) {
   var thenum = challenge.replace( /^\D+/g, '');
   console.log("ispis " + thenum);
   res.contentType = "text/plain";
+  console.log(req.query['hub.verify_token']);
   res.send(thenum);
 });
 
