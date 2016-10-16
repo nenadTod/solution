@@ -22,5 +22,7 @@ module.exports = {
     quantityMessage: "Enter a quantity",
     sthElse: "Would you like something else?",
     buyMessage: "Ok, here is the bill %(bill). Would you like to proceed?",
-    thanks: "Thank you for shopping, enjoy your day!"
+    thanks: "Thank you for shopping, enjoy your day!",
+    orderUnknown: "I couldn't find that order. Repeat it:",
+    orderString: "You have ordered %(order)"
 };

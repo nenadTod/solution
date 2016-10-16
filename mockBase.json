@@ -2,23 +2,23 @@
 	"Sandwiches" : 
 	[ { 
 		  "name": "Triangle sandwich",
-		  "type": [ "klasik", "prsut", "3 x sir"],
+		  "type": [ "classic", "ham", "cheese"],
 		  "price": "250,00",
 		  "action": "",
 		  "description": "",
 		  "photo": ""
 	  },
 	  {
-		  "name": "Baget sandwich",
-		  "type": ["klasik", "budjola", "pohovana piletina"],
+		  "name": "Baguette sandwich",
+		  "type": ["classic", "ham", "cheese"],
 		  "price": "200,00",
 		  "action": "",
 		  "description": "",
 		  "photo": ""
 	  },
 	  {
-		  "name": "Tost sandwich",
-		  "type": ["klasik", "prsut sir"],
+		  "name": "Toast sandwich",
+		  "type": ["classic", "ham", "cheese"],
 		  "price": "200,00",
 		  "action": "",
 		  "description": "",
